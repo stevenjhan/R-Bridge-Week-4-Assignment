@@ -1,0 +1,147 @@
+---
+title: "R Bridge Week 4 Assignment"
+author: "Steven Han"
+date: "August 3, 2017"
+fontsize: 8
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Header Values
+
+The vector below is assigned to the element names for the `mushrooms_attribute` list and the header values for the `mushrooms` tbl_df we will create.
+
+```{r header_creation}
+
+header_values <- c("mushroom_class", "cap_shape", "cap_surface", "cap_color", "bruises", "odor", "gill_attachment", "gill_spacing", "gill_size", "gill_color", "stalk_shape", "stalk_root", "stalk_surface_above_ring", "stalk_surface_below_ring", "stalk_color_above_ring", "stalk_color_below_ring", "veil_type", "veil_color", "ring_number", "ring_type", "spore_print_color", "population", "habitat")
+
+```
+
+
+### Create Attribute List
+
+The below creates a list of named vectors of unequal length to store the abbreviations and attribute names. Each set of mushroom attributes is its own list with the abbreviations as the name for each vector element. This was done in order to store the mushroom attributes as a generalized, unsorted object which can be updated and referenced as needed.
+
+```{r attribute_creation}
+
+mushroom_attributes <- list(
+c("edible", "poisonous"),
+c("bell", "conical", "convex", "flat", "knobbed", "sunken"),
+c("fibrous", "grooves", "scaly", "smooth"),
+c("brown", "buff", "cinnamon", "gray", "green", "pink", "purple", "red", "white", "yellow"),
+c("bruises", "no"),
+c("almond", "anise", "creosote", "fishy", "foul", "musty", "none", "pungent", "spicy"),
+c("attached", "descending", "free", "notched"),
+c("close", "crowded", "distant"),
+c("broad", "narrow"),
+c("black", "brown", "buff", "chocolate", "gray", "green", "orange", "pink", "purple", "red", "white", "yellow"),
+c("enlarging", "tapering"),
+c("bulbous", "club", "cup", "equal", "rhizomorphs", "rooted", "missing"),
+c("fibrous", "scaly", "silky", "smooth"),
+c("fibrous", "scaly", "silky", "smooth"),
+c("brown", "buff", "cinnamon", "gray", "orange", "pink", "red", "white", "yellow"),
+c("brown", "buff", "cinnamon", "gray", "orange", "pink", "red", "white", "yellow"),
+c("partial", "universal"),
+c("brown", "orange", "white", "yellow"),
+c("none", "one", "two"),
+c("cobwebby", "evanescent", "flaring", "large", "none", "pendant", "sheathing", "zone"),
+c("black", "brown", "buff", "chocolate", "green", "orange", "purple", "white", "yellow"),
+c("abundant", "clustered", "numerous", "scattered", "several", "solitary"),
+c("grasses", "leaves", "meadows", "paths", "urban", "waste", "woods")
+)
+
+mushroom_abbreviations <- list(
+c("e", "p"),
+c("b", "c", "x", "f", "k", "s"),
+c("f", "g", "y", "s"),
+c("n", "b", "c", "g", "r", "p", "u", "e", "w", "y"),
+c("t", "f"),
+c("a", "l", "c", "y", "f", "m", "n", "p", "s"),
+c("a", "d", "f", "n"),
+c("c", "w", "d"),
+c("b", "n"),
+c("k", "n", "b", "h", "g", "r", "o", "p", "u", "e", "w", "y"),
+c("e", "t"),
+c("b", "c", "u", "e", "z", "r", "?"),
+c("f", "y", "k", "s"),
+c("f", "y", "k", "s"),
+c("n", "b", "c", "g", "o", "p", "e", "w", "y"),
+c("n", "b", "c", "g", "o", "p", "e", "w", "y"),
+c("p", "u"),
+c("n", "o", "w", "y"),
+c("n", "o", "t"),
+c("c", "e", "f", "l", "n", "p", "s", "z"),
+c("k", "n", "b", "h", "r", "o", "u", "w", "y"),
+c("a", "c", "n", "s", "v", "y"),
+c("g", "l", "m", "p", "u", "w", "d")
+)
+
+# for loop is used to assign a vector name from the mushroom_abbreviations list of vectors to the mushroom_attributes list of vectors
+
+for(i in 1:length(mushroom_attributes)) {
+    names(mushroom_attributes[[i]]) <- mushroom_abbreviations[[i]]
+}
+
+# The names for each list element is assigned with the values within the header_values vector
+names(mushroom_attributes) <- header_values
+    
+```
+
+### Reading in Data
+
+We will make use of the `readr` package and the `read_delim` function to read in the mushrooms data for easier data manipulation later on. After the file is read, we will output the head of the `tbl_df` object.
+
+```{r reading_data, message = FALSE, warning = FALSE}
+
+data_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"
+
+# Load the readr library to create a tbl_df object; this is needed to make use of the dplyr library later on in our output
+library(readr)
+
+mushrooms <- read_delim(file = data_url, delim = ',', , na = c("?"), col_names = FALSE)
+
+names(mushrooms) <- header_values
+
+print(mushrooms)
+
+```
+
+### Transforming the Data
+
+The below function will transform the mushrom `tbl_df` such that the abbreviations are more readable.
+
+``` {r transforming_data}
+
+mushroom_transform <- function(data_set, data_headers) {
+    for(i in data_headers) {
+        data_set[[i]] <- mushroom_attributes[[i]][data_set[[i]]]
+    }
+    return(data_set)
+}
+
+```
+
+### Outputting a Subset of the Data
+
+``` {r output, message = FALSE, warning = FALSE}
+
+# Load the dplyr library to make use of the select function
+library(dplyr)
+
+# Create a character vector of header columns we want returned
+query <- c("mushroom_class", "bruises", "population", "habitat")
+
+# Use the select function to output a subset of our mushrooms tbl_df
+mushroom_output <- select(mushrooms, query)
+
+print(mushroom_output)
+
+# Use the mushroom_transform function to take our previous output and transform all of the abbreviations
+mushroom_output2 <- mushroom_transform(mushroom_output, query)
+
+print(mushroom_output2)
+
+```
